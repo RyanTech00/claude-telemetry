@@ -1,3 +1,5 @@
+<div align="center">
+
 # claude-telemetry
 
 **Centralized Claude Code usage tracking across multiple PCs**
@@ -6,6 +8,10 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-yellow.svg)](https://python.org)
 [![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-f38020.svg)](https://pages.cloudflare.com)
+
+</div>
+
+---
 
 ## What is this?
 
