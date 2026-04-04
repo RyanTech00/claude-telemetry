@@ -38,8 +38,6 @@ def _detect_subagent(session_id: str) -> bool:
 def _session_id_to_project(session_id: str) -> str:
     """Extract a readable project name from the session ID path encoding."""
     # ccusage encodes paths as C--Users-RyanS-Documents-project-name
-    # Strip drive prefix and convert dashes back
-    parts = session_id.split("-")
 
     # Handle Paperclip workspaces/projects
     if "paperclip-instances" in session_id:
@@ -130,10 +128,33 @@ def collect_session_usage() -> list[SessionUsage]:
     return results
 
 
-def collect_rate_limits() -> list[RateLimit] | None:
+def _find_ccost() -> str:
+    """Find ccost binary: check venv first, then PATH."""
+    import shutil
+    from pathlib import Path
+
+    # Check venv/Scripts (Windows) or venv/bin (Unix)
+    venv_dir = Path(sys.prefix)
+    if sys.platform == "win32":
+        venv_ccost = venv_dir / "Scripts" / "ccost.exe"
+    else:
+        venv_ccost = venv_dir / "bin" / "ccost"
+    if venv_ccost.exists():
+        return str(venv_ccost)
+
+    # Fall back to PATH
+    found = shutil.which("ccost")
+    if found:
+        return found
+
+    raise FileNotFoundError("ccost not found")
+
+
+def collect_rate_limits(ccost_path: str | None = None) -> list[RateLimit] | None:
     """(Optional) Call `ccost sl --output json`. Returns None if ccost not installed."""
     try:
-        raw = _run_command(["ccost", "sl", "--output", "json"], timeout=60)
+        ccost_bin = ccost_path or _find_ccost()
+        raw = _run_command([ccost_bin, "sl", "--output", "json"], timeout=60)
         data = json.loads(raw)
         results: list[RateLimit] = []
         for entry in data if isinstance(data, list) else [data]:

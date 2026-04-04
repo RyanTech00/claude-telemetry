@@ -73,8 +73,20 @@ def setup(
     ).stdout.strip()
     click.echo(f"  Node.js: {node_ver}")
 
-    ccost_installed = shutil.which("ccost") is not None
-    click.echo(f"  ccost:   {'installed' if ccost_installed else 'not found (optional)'}")
+    # Check ccost: venv first, then PATH
+    try:
+        from .collector import _find_ccost
+        ccost_path = _find_ccost()
+        ccost_ver = subprocess.run(
+            [ccost_path, "--version"], capture_output=True, text=True
+        ).stdout.strip()
+        ccost_installed = True
+        click.echo(f"  ccost:   {ccost_ver or 'installed'} (rate limit tracking enabled)")
+    except (FileNotFoundError, Exception):
+        ccost_installed = False
+        ccost_path = None
+        click.echo("  ccost:   not found (rate limit tracking disabled)")
+        click.echo("           Install from https://github.com/toolsu/ccost")
 
     claude_dir = detect_claude_data_dir()
     click.echo(f"  Claude dir: {claude_dir} ({'exists' if claude_dir.exists() else 'NOT FOUND'})")
@@ -110,6 +122,7 @@ def setup(
 
     config["claude_data_dir"] = str(claude_dir)
     config["features"]["ccost_installed"] = ccost_installed
+    config["features"]["ccost_path"] = ccost_path if ccost_installed else None
 
     save_config(config)
     click.echo(f"\nConfig saved to {CONFIG_FILE}")
@@ -198,7 +211,7 @@ def sync(verbose: bool, daily_only: bool, force: bool) -> None:
     # Rate limits (optional)
     if config.get("features", {}).get("ccost_installed"):
         click.echo("\n  Collecting rate limits...", nl=False)
-        rate_data = collect_rate_limits()
+        rate_data = collect_rate_limits(ccost_path=config.get("features", {}).get("ccost_path"))
         if rate_data:
             click.echo(f" {len(rate_data)} records")
             result = sync_rate_limits(rate_data, machine_id, client)

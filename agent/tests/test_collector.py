@@ -128,8 +128,9 @@ class TestCollectRateLimits:
         result = collect_rate_limits()
         assert result is None
 
+    @patch("claude_tracker.collector._find_ccost", return_value="ccost")
     @patch("claude_tracker.collector._run_command")
-    def test_parses_rate_limit_data(self, mock_run: MagicMock) -> None:
+    def test_parses_rate_limit_data(self, mock_run: MagicMock, _mock_find: MagicMock) -> None:
         mock_run.return_value = json.dumps([{
             "timestamp": "2026-04-01T10:00:00Z",
             "window_5h_percent": 15.5,

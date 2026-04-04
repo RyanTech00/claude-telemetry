@@ -37,13 +37,21 @@ function getCommands(
   const pythonCmd = isWin ? "python" : "python3";
   const cdSep = isWin ? "\\" : "/";
 
-  const setupCmd = [
-    `claude-tracker setup --non-interactive \\`,
-    `  --name "${machineName}" \\`,
-    `  --supabase-url "${config.supabase_url}" \\`,
-    `  --supabase-key "PASTE_YOUR_KEY_HERE" \\`,
-    `  --machine-id "${config.machine_id}"`,
-  ].join("\n");
+  const setupCmd = isWin
+    ? `claude-tracker setup --non-interactive --name "${machineName}" --supabase-url "${config.supabase_url}" --supabase-key "PASTE_YOUR_KEY_HERE" --machine-id "${config.machine_id}"`
+    : [
+        `claude-tracker setup --non-interactive \\`,
+        `  --name "${machineName}" \\`,
+        `  --supabase-url "${config.supabase_url}" \\`,
+        `  --supabase-key "PASTE_YOUR_KEY_HERE" \\`,
+        `  --machine-id "${config.machine_id}"`,
+      ].join("\n");
+
+  const ccostInstall = isWin
+    ? `powershell -Command "Invoke-WebRequest -Uri 'https://github.com/toolsu/ccost/releases/latest/download/ccost-win32-x64.zip' -OutFile ccost.zip; Expand-Archive ccost.zip -DestinationPath .${cdSep}venv${cdSep}Scripts${cdSep} -Force; Remove-Item ccost.zip"`
+    : os === "macos"
+      ? "curl -sL https://github.com/toolsu/ccost/releases/latest/download/ccost-darwin-arm64.tar.gz | tar xz -C ./venv/bin/"
+      : "curl -sL https://github.com/toolsu/ccost/releases/latest/download/ccost-linux-x64.tar.gz | tar xz -C ./venv/bin/";
 
   return [
     {
@@ -55,6 +63,7 @@ function getCommands(
         `${pythonCmd} -m venv venv`,
         activateCmd,
         "pip install -e .",
+        ccostInstall,
       ].join("\n"),
     },
     {
@@ -68,6 +77,9 @@ function getCommands(
       step: "3",
       label: "Start agent service",
       code: [activateCmd, "claude-tracker install-service"].join("\n"),
+      warning: isWin
+        ? "Run PowerShell as Administrator (right-click \u2192 Run as Administrator)"
+        : undefined,
     },
     {
       step: "4",

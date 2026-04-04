@@ -66,7 +66,7 @@ def _run_sync_cycle(config: dict[str, Any]) -> dict[str, int]:
 
     # Rate limits (optional)
     if config.get("features", {}).get("ccost_installed"):
-        rate_data = collect_rate_limits()
+        rate_data = collect_rate_limits(ccost_path=config.get("features", {}).get("ccost_path"))
         if rate_data:
             r = sync_rate_limits(rate_data, machine_id, client)
             results["rate_limits"] = r.records_upserted

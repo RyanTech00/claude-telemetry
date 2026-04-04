@@ -35,3 +35,6 @@ desktop.ini
 
 # Build cache
 *.tsbuildinfo
+
+# Claude Code
+.claude/

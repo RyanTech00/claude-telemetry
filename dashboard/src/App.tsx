@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { MachineFilterProvider } from "./hooks/useMachineFilter";
 import { Layout } from "./components/layout/Layout";
@@ -62,6 +62,18 @@ function AuthenticatedApp() {
     setPage(newPage);
     window.location.hash = newPage;
   };
+
+  // Sync page state when hash changes externally (e.g. <a href="#deploy">)
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash && !hash.startsWith("auth-callback") && hash !== page) {
+        setPage(hash);
+      }
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [page]);
 
   if (isLoading) {
     return (
