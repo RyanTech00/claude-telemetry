@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchMachines, deleteMachine, getExportUrl } from "../lib/api";
+import { fetchMachines, deleteMachine, downloadExport } from "../lib/api";
 import { getStatusDisplay } from "../lib/machineStatus";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
@@ -181,24 +181,24 @@ export function Settings() {
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <h3 className="mb-3 text-sm font-medium">Export Data</h3>
         <div className="flex flex-wrap gap-2">
-          <a
-            href={getExportUrl("daily", "csv")}
+          <button
+            onClick={() => downloadExport("daily", "csv")}
             className="rounded-lg border border-white/[0.06] px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.04]"
           >
             Export Daily (CSV)
-          </a>
-          <a
-            href={getExportUrl("sessions", "csv")}
+          </button>
+          <button
+            onClick={() => downloadExport("sessions", "csv")}
             className="rounded-lg border border-white/[0.06] px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.04]"
           >
             Export Sessions (CSV)
-          </a>
-          <a
-            href={getExportUrl("daily", "json")}
+          </button>
+          <button
+            onClick={() => downloadExport("daily", "json")}
             className="rounded-lg border border-white/[0.06] px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.04]"
           >
             Export JSON
-          </a>
+          </button>
         </div>
       </div>
 

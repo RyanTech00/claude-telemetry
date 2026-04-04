@@ -219,11 +219,11 @@ export async function deleteMachine(
 
 // --- Exports ---
 
-export function getExportUrl(
+export async function downloadExport(
   type: "daily" | "sessions",
   format: "csv" | "json",
   params?: Record<string, string | undefined>,
-): string {
+): Promise<void> {
   const endpoint = type === "daily" ? "export-daily" : "export-sessions";
   const searchParams = new URLSearchParams({ format });
   if (params) {
@@ -231,5 +231,16 @@ export function getExportUrl(
       if (value) searchParams.set(key, value);
     }
   }
-  return `${API_BASE}/${endpoint}?${searchParams}`;
+  const url = `${API_BASE}/${endpoint}?${searchParams}`;
+  const res = await fetch(url, { headers: getAuthHeaders() });
+  if (!res.ok) {
+    throw new Error(`Export failed: ${res.status}`);
+  }
+  const blob = await res.blob();
+  const filename = `${type}_usage.${format}`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
