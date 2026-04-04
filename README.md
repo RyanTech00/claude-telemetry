@@ -2,6 +2,8 @@
 
 # claude-telemetry
 
+<img src="docs/screenshot-overview.png" alt="Dashboard Overview" width="900">
+
 **Centralized Claude Code usage tracking across multiple PCs**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
