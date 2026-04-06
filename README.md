@@ -4,7 +4,7 @@
 
 # claude-telemetry
 
-<img src="docs/screenshot-overview.png" alt="Dashboard Overview" width="800">
+<img src="docs/screenshot-overview1.png" alt="Dashboard Overview" width="800">
 
 **Centralized Claude Code usage tracking across multiple PCs**
 
