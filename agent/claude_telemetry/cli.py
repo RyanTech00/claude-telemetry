@@ -87,7 +87,26 @@ def _migrate_legacy_config() -> None:
             except Exception:
                 pass
 
-    # 5. Rename MCP server key from "claude-telemetry" → "cc-telemetry" in ~/.claude.json
+    # 5. Fix StatusLine: move from hooks.StatusLine to top-level statusLine
+    if settings_path.exists():
+        try:
+            data = json.loads(settings_path.read_text(encoding="utf-8"))
+            hooks = data.get("hooks", {})
+            if "StatusLine" in hooks:
+                # Move to top-level statusLine format
+                old = hooks["StatusLine"]
+                cmd = old[0].get("command", "") if isinstance(old, list) and old else ""
+                if cmd:
+                    data["statusLine"] = {"type": "command", "command": cmd, "padding": 0}
+                del hooks["StatusLine"]
+                if not hooks:
+                    del data["hooks"]
+                settings_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+                click.echo("Migrated StatusLine from hooks to top-level statusLine")
+        except Exception:
+            pass
+
+    # 6. Rename MCP server key from "claude-telemetry" → "cc-telemetry" in ~/.claude.json
     if claude_json.exists():
         try:
             data = json.loads(claude_json.read_text(encoding="utf-8"))
@@ -622,8 +641,20 @@ def _setup_statusline_internal() -> None:
             settings = json.loads(settings_path.read_text())
         except Exception:
             pass
-    settings.setdefault("hooks", {})
-    settings["hooks"]["StatusLine"] = [{"type": "command", "command": str(script_path)}]
+
+    # statusLine is a top-level key (NOT inside hooks)
+    settings["statusLine"] = {
+        "type": "command",
+        "command": str(script_path),
+        "padding": 0,
+    }
+
+    # Clean up legacy wrong location if present
+    if "hooks" in settings and "StatusLine" in settings["hooks"]:
+        del settings["hooks"]["StatusLine"]
+        if not settings["hooks"]:
+            del settings["hooks"]
+
     settings_path.write_text(json.dumps(settings, indent=2))
 
 
@@ -850,7 +881,7 @@ def doctor() -> None:
     if settings_path.exists():
         try:
             s = json.loads(settings_path.read_text())
-            statusline_ok = "StatusLine" in s.get("hooks", {})
+            statusline_ok = "statusLine" in s
         except Exception:
             pass
     _check("Statusline configured", statusline_ok,
