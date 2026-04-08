@@ -12,6 +12,7 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-yellow.svg)](https://python.org)
 [![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-f38020.svg)](https://pages.cloudflare.com)
+[![PyPI version](https://img.shields.io/pypi/v/cc-telemetry.svg)](https://pypi.org/project/cc-telemetry/)
 
 </div>
 
@@ -44,6 +45,12 @@ The agent does **no custom JSONL parsing** — it calls `ccusage` as the parsing
 - Statusline auto-setup for rate limit tracking
 - Export data as CSV/JSON
 - Uses existing tools (ccusage) — no custom JSONL parsing
+- **Real-time hooks** — instant sync on session end (SessionEnd + Stop hooks)
+- **MCP server** with 12 tools — query usage data directly from Claude Code
+- **Insights Engine** — trend analysis, anomaly detection, cost forecasting, period comparison
+- **Webhook notifications** — Discord/Slack alerts for budget and rate limit thresholds
+- **Setup wizard** (`cc-telemetry setup`) — one command configures hooks, MCP, statusline, daemon
+- **Doctor** (`cc-telemetry doctor`) — 10-point health check for all components
 
 ## Quick Start
 
@@ -56,6 +63,7 @@ The agent does **no custom JSONL parsing** — it calls `ccusage` as the parsing
    2. [`supabase/migrations/002_stats_extra_unique.sql`](supabase/migrations/002_stats_extra_unique.sql)
    3. [`supabase/migrations/003_user_preferences.sql`](supabase/migrations/003_user_preferences.sql)
    4. [`supabase/migrations/004_blocks.sql`](supabase/migrations/004_blocks.sql)
+   5. [`supabase/migrations/005_notifications.sql`](supabase/migrations/005_notifications.sql)
 4. Authentication > URL Configuration:
    - **Site URL:** `https://your-app.pages.dev`
    - **Redirect URLs:** add same URL
@@ -71,6 +79,7 @@ npx wrangler pages project create claude-telemetry
 npx wrangler pages secret put SUPABASE_URL        # paste Project URL
 npx wrangler pages secret put SUPABASE_SERVICE_KEY # paste service_role key
 npx wrangler pages secret put ALLOWED_EMAILS       # e.g. "you@email.com,friend@email.com"
+npx wrangler pages secret put CRON_SECRET          # random string for webhook cron auth
 npm run build
 npx wrangler pages deploy dist
 ```
@@ -125,22 +134,39 @@ cc-telemetry setup
 
 ## CLI Reference
 
+**Setup**
+
 | Command | Description |
 |---|---|
 | `cc-telemetry setup` | Setup wizard — configure everything in one command |
 | `cc-telemetry doctor` | Health check — verify all components |
+| `cc-telemetry setup-hooks` | Configure real-time sync hooks |
+| `cc-telemetry setup-mcp` | Register MCP server with Claude Code |
+| `cc-telemetry setup-statusline` | Configure rate limit tracking |
+
+**Operation**
+
+| Command | Description |
+|---|---|
 | `cc-telemetry sync` | Manual sync to Supabase |
 | `cc-telemetry sync --verbose` | Sync with detailed output |
 | `cc-telemetry sync --force` | Re-sync all data |
+| `cc-telemetry status` | Show config and last sync |
+| `cc-telemetry local --daily` | View local data without syncing |
+
+**Service**
+
+| Command | Description |
+|---|---|
 | `cc-telemetry daemon` | Run auto-sync in foreground |
 | `cc-telemetry install-service` | Install as system service |
 | `cc-telemetry uninstall-service` | Remove system service |
 | `cc-telemetry service-status` | Check daemon status |
-| `cc-telemetry status` | Show config and last sync |
-| `cc-telemetry local --daily` | View local data without syncing |
-| `cc-telemetry setup-hooks` | Configure real-time sync hooks |
-| `cc-telemetry setup-mcp` | Register MCP server with Claude Code |
-| `cc-telemetry setup-statusline` | Configure rate limit tracking |
+
+**Cleanup**
+
+| Command | Description |
+|---|---|
 | `cc-telemetry uninstall` | Remove agent config from this machine |
 
 ## Security
@@ -217,6 +243,12 @@ Or just star the repo — it helps a lot!
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=RyanTech00/claude-telemetry&type=date&legend=top-left" />
  </picture>
 </a>
+
+## Releases
+
+See [GitHub Releases](https://github.com/RyanTech00/claude-telemetry/releases) for changelog.
+
+Latest: **v0.3.1** — statusLine fix, hook script migration, doctor timeout fix.
 
 ## License
 

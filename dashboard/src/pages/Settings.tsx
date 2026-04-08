@@ -446,7 +446,7 @@ export function Settings() {
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <h3 className="mb-2 text-sm font-medium">About</h3>
         <p className="text-xs text-slate-400">
-          Claude Telemetry v0.3.0
+          Claude Telemetry v0.3.1
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Open-source centralized token usage tracking for Claude Code.
