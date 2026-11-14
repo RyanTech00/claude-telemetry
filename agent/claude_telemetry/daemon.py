@@ -12,6 +12,7 @@ from typing import Any
 
 from .config import CONFIG_DIR, load_config
 from .collector import collect_daily_usage, collect_session_usage, collect_rate_limits, collect_blocks_usage
+from .effort import collect_effort_usage
 from .extras import read_stats_cache
 from .logging_config import get_rotating_handler, LOG_FMT
 
@@ -37,7 +38,7 @@ def _setup_logging(verbose: bool = False) -> None:
 def _run_sync_cycle(config: dict[str, Any]) -> dict[str, int]:
     """Run one full sync cycle. Returns {source: records_upserted}."""
     from supabase import create_client
-    from .sync import sync_daily_usage, sync_sessions, sync_rate_limits, sync_stats_extra, sync_blocks
+    from .sync import sync_daily_usage, sync_effort_usage, sync_sessions, sync_rate_limits, sync_stats_extra, sync_blocks
 
     import platform as _platform
 
@@ -73,6 +74,16 @@ def _run_sync_cycle(config: dict[str, Any]) -> dict[str, int]:
         for err in r.errors:
             logger.warning("sessions error: %s", err)
 
+    # Effort usage (read directly from transcripts)
+    claude_dir = Path(config.get("claude_data_dir", str(Path.home() / ".claude")))
+    last_effort = config.get("last_sync", {}).get("effort_usage")
+    effort = collect_effort_usage(claude_dir, since=last_effort[:10] if last_effort else None)
+    if effort:
+        r = sync_effort_usage(effort, machine_id, client)
+        results["effort_usage"] = r.records_upserted
+        for err in r.errors:
+            logger.warning("effort_usage error: %s", err)
+
     # Rate limits (optional)
     if config.get("features", {}).get("ccost_installed"):
         rate_data = collect_rate_limits(ccost_path=config.get("features", {}).get("ccost_path"))
@@ -81,7 +92,6 @@ def _run_sync_cycle(config: dict[str, Any]) -> dict[str, int]:
             results["rate_limits"] = r.records_upserted
 
     # Stats extra
-    claude_dir = Path(config.get("claude_data_dir", str(Path.home() / ".claude")))
     stats = read_stats_cache(claude_dir)
     if stats:
         r = sync_stats_extra(stats, machine_id, client)

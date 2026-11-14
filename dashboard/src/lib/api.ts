@@ -253,6 +253,32 @@ export async function fetchBlocks(opts?: {
   });
 }
 
+// --- Effort ---
+
+export interface EffortBreakdownRow {
+  machine_id: string;
+  model: string;
+  effort: string;
+  messages: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_tokens: number;
+  cache_read_tokens: number;
+  total_tokens: number;
+}
+
+export async function fetchEffortBreakdown(
+  startDate: string,
+  endDate: string,
+  machineId?: string,
+): Promise<EffortBreakdownRow[]> {
+  return fetchJson("effort-breakdown", {
+    start_date: startDate,
+    end_date: endDate,
+    machine_id: machineId,
+  });
+}
+
 // --- Preferences ---
 
 export interface NotificationPrefs {

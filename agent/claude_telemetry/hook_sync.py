@@ -55,7 +55,8 @@ def _run_hook_sync(config: dict[str, Any], logger: logging.Logger) -> None:
     from supabase import create_client
 
     from .collector import collect_daily_usage, collect_session_usage, collect_blocks_usage
-    from .sync import sync_daily_usage, sync_sessions, sync_blocks
+    from .effort import collect_effort_usage
+    from .sync import sync_daily_usage, sync_effort_usage, sync_sessions, sync_blocks
 
     machine_id = config["machine_id"]
     client = create_client(config["supabase_url"], config["supabase_service_key"])
@@ -89,6 +90,14 @@ def _run_hook_sync(config: dict[str, Any], logger: logging.Logger) -> None:
     if blocks:
         r = sync_blocks(blocks, machine_id, client)
         results["blocks"] = r.records_upserted
+
+    # Effort usage (incremental, read directly from transcripts)
+    claude_dir = Path(config.get("claude_data_dir", str(Path.home() / ".claude")))
+    last_effort = config.get("last_sync", {}).get("effort_usage")
+    effort = collect_effort_usage(claude_dir, since=last_effort[:10] if last_effort else None)
+    if effort:
+        r = sync_effort_usage(effort, machine_id, client)
+        results["effort_usage"] = r.records_upserted
 
     total = sum(results.values())
     logger.info(
