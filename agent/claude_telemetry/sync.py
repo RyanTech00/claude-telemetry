@@ -10,7 +10,7 @@ from typing import Any
 from supabase import create_client, Client
 
 from .config import load_config, update_last_sync, get_last_sync
-from .models import DailyUsage, SessionUsage, RateLimit, StatsExtra, BlockUsage, SyncResult
+from .models import DailyUsage, EffortUsage, SessionUsage, RateLimit, StatsExtra, BlockUsage, SyncResult
 
 logger = logging.getLogger("claude-telemetry")
 
@@ -80,6 +80,62 @@ def sync_daily_usage(
 
     return SyncResult(
         source="daily_usage",
+        records_upserted=upserted,
+        errors=errors,
+        duration_ms=elapsed,
+    )
+
+
+def sync_effort_usage(
+    records: list[EffortUsage],
+    machine_id: str,
+    client: Client,
+    batch_size: int = 500,
+) -> SyncResult:
+    """Batch upsert daily effort usage records to Supabase.
+
+    Each record is a full-day total recomputed from the transcripts, so upserting
+    replaces the previous value (idempotent, safe to resend).
+    """
+    start = time.monotonic()
+    errors: list[str] = []
+    upserted = 0
+
+    rows = [{
+        "machine_id": machine_id,
+        "date": r.date,
+        "project": r.project,
+        "model": r.model,
+        "effort": r.effort,
+        "messages": r.messages,
+        "input_tokens": r.input_tokens,
+        "output_tokens": r.output_tokens,
+        "cache_creation_tokens": r.cache_creation_tokens,
+        "cache_read_tokens": r.cache_read_tokens,
+        "total_tokens": r.total_tokens,
+    } for r in records]
+
+    for i in range(0, len(rows), batch_size):
+        chunk = rows[i:i + batch_size]
+        try:
+            client.table("effort_usage").upsert(
+                chunk,
+                on_conflict="machine_id,date,project,model,effort",
+            ).execute()
+            upserted += len(chunk)
+        except Exception as e:
+            errors.append(f"effort_usage batch: {e}")
+            break
+
+    elapsed = int((time.monotonic() - start) * 1000)
+
+    if not errors:
+        update_last_sync("effort_usage", _now_iso())
+
+    _log_sync(client, machine_id, "effort_usage", upserted, errors, elapsed)
+
+    return SyncResult(
+        source="effort_usage",
         records_upserted=upserted,
         errors=errors,
         duration_ms=elapsed,

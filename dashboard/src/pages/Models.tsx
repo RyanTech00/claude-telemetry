@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useUsageData } from "../hooks/useUsageData";
 import { rangeToDate } from "../lib/dateUtils";
 import { DateRangePicker } from "../components/filters/DateRangePicker";
+import { EffortBreakdown } from "../components/charts/EffortBreakdown";
 import {
   AreaChart,
   Area,
@@ -161,6 +162,9 @@ export function Models() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Reasoning effort breakdown */}
+      <EffortBreakdown dateRange={dateRange} />
     </div>
   );
 }

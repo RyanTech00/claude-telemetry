@@ -27,6 +27,7 @@ from .config import (
     save_config,
 )
 from .collector import collect_daily_usage, collect_session_usage, collect_rate_limits, collect_blocks_usage
+from .effort import collect_effort_usage
 from .extras import read_stats_cache, read_history_index
 
 
@@ -388,7 +389,7 @@ def setup(
 def sync(verbose: bool, daily_only: bool, force: bool) -> None:
     """Collect data from ccusage and sync to Supabase."""
     from supabase import create_client
-    from .sync import sync_daily_usage, sync_sessions, sync_rate_limits, sync_stats_extra, sync_blocks
+    from .sync import sync_daily_usage, sync_effort_usage, sync_sessions, sync_rate_limits, sync_stats_extra, sync_blocks
 
     config = load_config()
     machine_id = config["machine_id"]
@@ -449,6 +450,22 @@ def sync(verbose: bool, daily_only: bool, force: bool) -> None:
         for err in result.errors:
             click.echo(f"  ERROR: {err}", err=True)
 
+    # Effort usage (read directly from transcripts — not exposed by ccusage)
+    click.echo("\n  Collecting effort usage...", nl=False)
+    claude_dir = Path(config.get("claude_data_dir", str(Path.home() / ".claude")))
+    last_effort = None if force else config.get("last_sync", {}).get("effort_usage")
+    effort = collect_effort_usage(claude_dir, since=last_effort[:10] if last_effort else None)
+    click.echo(f" {len(effort)} records")
+    if verbose:
+        for e in effort[:5]:
+            click.echo(f"    {e.date} | {e.project} | {e.model} | {e.effort} | {e.total_tokens} tokens")
+    if effort:
+        result = sync_effort_usage(effort, machine_id, client)
+        click.echo(f"  Upserted: {result.records_upserted} ({result.duration_ms}ms)")
+        if result.errors:
+            for err in result.errors:
+                click.echo(f"  ERROR: {err}", err=True)
+
     # Rate limits (optional)
     if config.get("features", {}).get("ccost_installed"):
         click.echo("\n  Collecting rate limits...", nl=False)
@@ -462,7 +479,6 @@ def sync(verbose: bool, daily_only: bool, force: bool) -> None:
 
     # Stats extra
     click.echo("\n  Reading stats cache...", nl=False)
-    claude_dir = Path(config.get("claude_data_dir", str(Path.home() / ".claude")))
     stats = read_stats_cache(claude_dir)
     if stats:
         click.echo(" found")

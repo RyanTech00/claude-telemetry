@@ -40,6 +40,7 @@ The agent does **no custom JSONL parsing** — it calls `ccusage` as the parsing
 - **Weekly usage reports** with daily/weekly toggle
 - Cross-machine usage pace comparison
 - Model mix analysis (Opus/Sonnet/Haiku breakdown)
+- Reasoning effort breakdown (low → max) per model and per machine, read directly from Claude Code transcripts
 - Supabase Auth (magic link login) with email whitelist
 - Cloudflare Workers proxy (zero exposed keys in frontend)
 - Deploy page with copy-paste agent install commands
@@ -65,6 +66,7 @@ The agent does **no custom JSONL parsing** — it calls `ccusage` as the parsing
    3. [`supabase/migrations/003_user_preferences.sql`](supabase/migrations/003_user_preferences.sql)
    4. [`supabase/migrations/004_blocks.sql`](supabase/migrations/004_blocks.sql)
    5. [`supabase/migrations/005_notifications.sql`](supabase/migrations/005_notifications.sql)
+   6. [`supabase/migrations/006_effort_usage.sql`](supabase/migrations/006_effort_usage.sql)
 4. Authentication > URL Configuration:
    - **Site URL:** `https://your-app.pages.dev`
    - **Redirect URLs:** add same URL

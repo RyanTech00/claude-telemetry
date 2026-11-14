@@ -20,6 +20,21 @@ class DailyUsage:
 
 
 @dataclass
+class EffortUsage:
+    """Daily token usage per (project, model, reasoning effort level)."""
+    date: str
+    project: str
+    model: str
+    effort: str
+    messages: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
+    total_tokens: int = 0
+
+
+@dataclass
 class SessionUsage:
     session_id: str
     project: str

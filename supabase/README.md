@@ -17,6 +17,7 @@ Go to **SQL Editor** in the Supabase Dashboard and run each migration **in order
 | 3 | [`003_user_preferences.sql`](migrations/003_user_preferences.sql) | User preferences table (plan, budgets, thresholds) |
 | 4 | [`004_blocks.sql`](migrations/004_blocks.sql) | 5-hour block tracking |
 | 5 | [`005_notifications.sql`](migrations/005_notifications.sql) | Notification history + notifications JSONB column on user_preferences |
+| 6 | [`006_effort_usage.sql`](migrations/006_effort_usage.sql) | Daily usage per reasoning effort level + `get_effort_breakdown` RPC |
 
 > **Important:** Migrations must be applied sequentially — each builds on the previous.
 
